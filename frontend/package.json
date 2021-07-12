@@ -16,7 +16,7 @@
     "react-router-dom": "^5.2.0",
     "react-scripts": "3.4.1",
     "react-simple-code-editor": "^0.11.0",
-    "reactstrap": "^8.4.1"
+    "reactstrap": "^8.9.0"
   },
   "scripts": {
     "start": "react-scripts start",
