@@ -1,6 +1,6 @@
 # Docker Image which is used as foundation to create
 # a custom Docker Image with this Dockerfile
-FROM node:13.12.0-alpine
+FROM node:13.13.0-alpine
  
 # A directory within the virtualized Docker environment
 # Becomes more relevant when using Docker Compose later
