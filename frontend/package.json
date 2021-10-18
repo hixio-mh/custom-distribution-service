@@ -46,6 +46,6 @@
     "@babel/core": "^7.10.2",
     "eslint": "^6.6.0",
     "eslint-config-google": "^0.14.0",
-    "eslint-plugin-react": "^7.20.0"
+    "eslint-plugin-react": "^7.26.0"
   }
 }
