@@ -1,9 +1,16 @@
+if (JENKINS_URL.contains('infra.ci.jenkins.io')) {
+  buildDockerAndPublishImage('custom-distribution-service', [dockerfile: 'Dockerfile.infra'])
+  return;
+}
+
 pipeline {
-    agent any 
+    agent {
+        label 'linux'
+    }
     stages {
         stage('Checkout') {
             steps{
-             checkout scm
+                checkout scm
             }
         }
 
@@ -14,7 +21,6 @@ pipeline {
                     "PATH+MVN=${tool 'mvn'}/bin",
                     'PATH+JDK=$JAVA_HOME/bin',
                 ]) {
-                    
                     timeout(60) {
                         script {
                             List<String> mvnOptions = ['-Dmaven.test.failure.ignore','verify']
@@ -39,9 +45,9 @@ pipeline {
 
         stage('React Build') {
             agent {
-            docker {
-                label 'linux'
-                image 'node:6-alpine'
+                docker {
+                    label 'linux'
+                    image 'node:12-alpine'
                 }
             }
             steps {
@@ -54,7 +60,7 @@ pipeline {
                 /* Archive the test results */
                 junit '**/target/surefire-reports/TEST-*.xml'
                 archiveArtifacts artifacts: '**/target/**/*.jar'
-                findbugs pattern: '**/target/findbugsXml.xml'
+                recordIssues(tools: [findBugs(pattern: '**/target/findbugsXml.xml', useRankAsPriority: true)])
             }
         }
     }

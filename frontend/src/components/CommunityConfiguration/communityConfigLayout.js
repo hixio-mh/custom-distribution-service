@@ -1,81 +1,81 @@
-import React from 'react'
-import PluginCard from '../PluginCards/pluginCard'
-import { Container, Row, Col, Button} from 'reactstrap';
-import ConfigurationCard from './configurationCard';
-import { InputGroup, InputGroupAddon,Input, Label } from 'reactstrap';
+import React, {useState, useEffect} from 'react'
+import PropTypes from 'prop-types'
+import { Container, Row, Col, Button, Progress } from 'reactstrap'
+import ConfigurationCard from './configurationCard'
+import { InputGroup, InputGroupAddon, Input } from 'reactstrap'
+import { safeLoad as yamlRead } from 'js-yaml'
+import { GITHUB_COMMUNITY_REPO } from '../../config'
 
 
-class communityConfigLayout extends React.Component {
+const CommunityConfigLayout= ({ setConfiguration }) => {
+    const [isLoading, setIsLoading] = useState(false)
+    const [data, setData] = useState([])
+    const [search, setSearch] = useState('')
 
-    state = {
-        search:"",
-        data: [],
-        isLoading: true
-    }
-
-    async componentDidMount() {
-        const response = await fetch(process.env.REACT_APP_GITHUB_COMMUNITY_URL);
-        const body = await response.json();
-        this.setState({data: body})
-    }
-    
-    onchange = pluginName => {
-        console.log("Searching Plugins")
-        this.setState({search: pluginName.target.value})
-    }
-
-    render() {
-        const search  = this.state.search
-        let configurationCards;
-        if (search !== "") {
-            configurationCards = this.state.data.map(config => {
-                if(!(config["name"].toLowerCase().indexOf( search.toLowerCase() ) === -1)) {
-                    return(
-                    <Col sm="3">
-                        <ConfigurationCard config = {config} /> 
-                    </Col>
-                    )
+    useEffect(() => {
+        async function fetchData() {
+            const yamlStr = await fetch(
+                `https://raw.githubusercontent.com/${GITHUB_COMMUNITY_REPO}/master/configurations.yaml`
+            ).then((response) => {
+                if (response.ok) {
+                    return response.text()
+                } else {
+                    throw new Error('Something went wrong')
                 }
-            })    
-        } else {
-            configurationCards = this.state.data.map(config => {
-                if (search !== "" && config["name"].toLowerCase().indexOf( search.toLowerCase() ) === -1) {
-                    return null
-                }
-                return(
-                    <Col sm="3">
-                        <ConfigurationCard config = {config} /> 
-                    </Col>
-                )
-            })  
-        }   
+            })
+            setData(yamlRead(yamlStr))
+            setIsLoading(false)
+        }
+        setIsLoading(true)
+        fetchData()
+    }, [])
 
-        return(
-            <Container fluid style = {{height: "100vh"}} class="column">
+    const onchange = event => {
+        setSearch(event.target.value)
+    }
+
+    const configurationCards = data.filter(config => {
+        if (search) {
+            return config.name.toLowerCase().includes(search.toLowerCase())
+        }
+        return true
+    }).map(config => {
+        return (
+            <Col sm="3" key={ config.name }>
+                <ConfigurationCard setConfiguration={ setConfiguration } name={ config.name } file={ config.file } /> 
+            </Col>
+        )
+    })
+
+    return (
+        <Container fluid style={ {height: '100vh'} } className="column">
             {/* Div to center align the search box */}
             <div
-                style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center"
-                }} >
+                style={ {
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                } } >
 
 
-            {/* Search Bar */}
-            <InputGroup style={{margin:"10px", width:"40%"}}>
-            <Input onChange = {this.onchange} />
-            <InputGroupAddon addonType="append">
-            <Button  style = {{backgroundColor:"#185ecc"}} >Search Community Config</Button>
-            </InputGroupAddon>
-            </InputGroup>
+                {/* Search Bar */}
+                <InputGroup style={ {margin:'10px', width:'40%'} }>
+                    <Input onChange={ onchange } />
+                    <InputGroupAddon addonType="append">
+                        <Button>Search Community Config</Button>
+                    </InputGroupAddon>
+                </InputGroup>
             </div>
             <Row>
+                {isLoading && <Progress bar value={ 60 } />}
                 {configurationCards} 
-             </Row>
-            </Container> 
-        )
-
-    }
+            </Row>
+        </Container> 
+    )
 }
 
-export default communityConfigLayout;
+CommunityConfigLayout.propTypes = {
+    setConfiguration: PropTypes.func.isRequired
+}
+
+export default CommunityConfigLayout
